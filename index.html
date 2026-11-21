@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>StatusHD — iOS Minimalist WhatsApp Status Optimizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            ios: {
+              bgDark: '#000000',
+              cardDark: '#111113',
+              elevatedDark: '#1C1C1E',
+              bgLight: '#F2F2F7',
+              cardLight: '#FFFFFF',
+              elevatedLight: '#E5E5EA',
+              blue: '#0A84FF',
+              green: '#30D158',
+              orange: '#FF9F0A',
+              red: '#FF453A',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-card: #111113;
+      --bg-elevated: #1C1C1E;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --hairline: rgba(255, 255, 255, 0.09);
+      --glass-bg: rgba(17, 17, 19, 0.80);
+      --pill-bg: rgba(255, 255, 255, 0.08);
+      --pill-active: #2C2C2E;
+      --slider-track: rgba(255, 255, 255, 0.14);
+      --accent: #0A84FF;
+    }
+
+    html:not(.dark) {
+      --bg-primary: #F2F2F7;
+      --bg-card: #FFFFFF;
+      --bg-elevated: #F2F2F7;
+      --text-primary: #000000;
+      --text-secondary: #6C6C70;
+      --hairline: rgba(0, 0, 0, 0.08);
+      --glass-bg: rgba(255, 255, 255, 0.84);
+      --pill-bg: rgba(118, 118, 128, 0.12);
+      --pill-active: #FFFFFF;
+      --slider-track: rgba(0, 0, 0, 0.12);
+      --accent: #007AFF;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+      letter-spacing: -0.015em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior-y: none;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Desktop subtle device framing */
+    @media (min-width: 520px) {
+      body {
+        background-image: radial-gradient(circle at 50% 0%, rgba(10, 132, 255, 0.08), transparent 55%);
+      }
+      .app-shell {
+        border-left: 1px solid var(--hairline);
+        border-right: 1px solid var(--hairline);
+        box-shadow: 0 25px 70px -20px rgba(0, 0, 0, 0.55);
+      }
+    }
+
+    .ios-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+    }
+
+    .ios-card {
+      background: var(--bg-card);
+      border: 1px solid var(--hairline);
+      border-radius: 22px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.18);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .ios-subcard {
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline);
+      border-radius: 16px;
+    }
+
+    .ios-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* Segmented control sliding pill */
+    .segmented-control {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--pill-bg);
+      padding: 3px;
+      border-radius: 14px;
+      border: 1px solid var(--hairline);
+    }
+
+    .segmented-pill {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: calc(50% - 3px);
+      height: calc(100% - 6px);
+      background: var(--pill-active);
+      border-radius: 11px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), 0 0.5px 1px rgba(0, 0, 0, 0.1);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 0;
+    }
+
+    .segmented-btn {
+      position: relative;
+      z-index: 1;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 0;
+      text-align: center;
+      border-radius: 11px;
+      transition: color 0.2s ease;
+    }
+
+    /* Native-feel iOS Range Slider */
+    input[type="range"].ios-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--slider-track);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"].ios-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"].ios-slider::-webkit-slider-thumb:active {
+      transform: scale(1.12);
+    }
+
+    input[type="range"].ios-slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+    }
+
+    /* Hide scrollbar for horizontal chips */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Before / After Compare Container */
+    .compare-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      user-select: none;
+      touch-action: pan-y;
+      background: #0a0a0c;
+    }
+
+    .compare-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.65);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .compare-knob {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      color: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    }
+
+    /* iOS Bottom Sheet Animation */
+    .sheet-backdrop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .sheet-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet-panel {
+      transform: translateY(100%);
+      transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .sheet-backdrop.open .sheet-panel {
+      transform: translateY(0);
+    }
+
+    /* Toast notification */
+    .ios-toast {
+      transform: translate(-50%, -20px) scale(0.95);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .ios-toast.show {
+      transform: translate(-50%, 0) scale(1);
+      opacity: 1;
+    }
+
+    /* Subtle button press */
+    .ios-tap {
+      transition: transform 0.14s ease, opacity 0.14s ease;
+    }
+    .ios-tap:active {
+      transform: scale(0.96);
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-blue-500/30">
+
+  <!-- Toast Notification (No alert() used) -->
+  <div id="toast" class="ios-toast fixed top-16 left-1/2 z-50 px-4 py-2.5 rounded-full ios-glass border border-white/15 shadow-2xl flex items-center gap-2 text-xs font-semibold tracking-tight whitespace-nowrap">
+    <span id="toastDot" class="w-2 h-2 rounded-full bg-ios-green"></span>
+    <span id="toastMsg">Ready</span>
+  </div>
+
+  <!-- Main Centered Mobile-First App Container -->
+  <div class="app-shell relative max-w-[480px] mx-auto min-h-screen flex flex-col pb-28">
+
+    <!-- Sticky Frosted Glass Header -->
+    <header class="sticky top-0 z-30 ios-glass border-b border-[var(--hairline)] px-4 pt-3.5 pb-3">
+      <div class="flex items-center justify-between mb-3">
+        <!-- Brand -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#0A84FF] to-[#30D158] flex items-center justify-center shadow-sm">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-[17px] font-bold tracking-tight leading-none">StatusHD</h1>
+            <p class="text-[11px] text-[var(--text-secondary)] font-medium mt-0.5">WhatsApp Anti-Blur Studio</p>
+          </div>
+        </div>
+
+        <!-- Header Right Controls: Tips & Theme Toggle -->
+        <div class="flex items-center gap-2">
+          <button id="tipsBtn" class="ios-tap h-8 px-3 rounded-full bg-[var(--pill-bg)] border border-[var(--hairline)] text-[12px] font-semibold flex items-center gap-1.5 text-[var(--text-primary)]" aria-label="HD Tips">
+            <svg class="w-3.5 h-3.5 text-ios-blue" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Tips
+          </button>
+          <button id="themeToggle" class="ios-tap w-8 h-8 rounded-full bg-[var(--pill-bg)] border border-[var(--hairline)] flex items-center justify-center text-[var(--text-primary)]" aria-label="Toggle Light/Dark Mode">
+            <!-- Sun Icon (shown in dark mode) -->
+            <svg id="sunIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <!-- Moon Icon (shown in light mode) -->
+            <svg id="moonIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- iOS Segmented Control: Photo / Video -->
+      <div class="segmented-control" role="tablist">
+        <div id="segmentedPill" class="segmented-pill"></div>
+        <button id="tabPhoto" class="segmented-btn text-[var(--text-primary)]" role="tab" aria-selected="true">
+          Photo HD
+        </button>
+        <button id="tabVideo" class="segmented-btn text-[var(--text-secondary)]" role="tab" aria-selected="false">
+          Video HD
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 px-4 pt-4 space-y-4">
+
+      <!-- ==================== PHOTO MODE ==================== -->
+      <section id="photoSection" class="space-y-4">
+
+        <!-- Photo Dropzone / Empty State -->
+        <div id="photoDropzone" class="ios-card p-7 text-center cursor-pointer transition-all hover:border-ios-blue/50 active:scale-[0.99]">
+          <input id="photoInput" type="file" accept="image/*" class="hidden" />
+          <div class="w-14 h-14 mx-auto mb-3.5 rounded-[18px] bg-ios-blue/12 border border-ios-blue/20 flex items-center justify-center">
+            <svg class="w-7 h-7 text-ios-blue" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h2 class="text-[17px] font-semibold tracking-tight">Select Photo for Status</h2>
+          <p class="text-[13px] text-[var(--text-secondary)] mt-1 max-w-[260px] mx-auto leading-snug">
+            Tap to pick from gallery or drop an image here. 100% processed privately on your device.
+          </p>
+          <div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--pill-bg)] text-[11px] font-medium text-[var(--text-secondary)]">
+            <span class="w-1.5 h-1.5 rounded-full bg-ios-green"></span>
+            JPG, PNG, WEBP, HEIC supported
+          </div>
+        </div>
+
+        <!-- Photo Editor Workspace (hidden until image loaded) -->
+        <div id="photoWorkspace" class="hidden space-y-4">
+
+          <!-- Live Metadata Pill -->
+          <div class="flex items-center justify-between gap-2 px-3.5 py-2.5 ios-card !rounded-2xl">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="photoStatusDot" class="w-2 h-2 rounded-full bg-ios-green shrink-0"></span>
+              <span id="photoMetaText" class="text-[12px] font-medium truncate">Calculating...</span>
+            </div>
+            <span id="photoWaBadge" class="shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-ios-green/15 text-ios-green">
+              Optimal for WA
+            </span>
+          </div>
+
+          <!-- Interactive Before / After Preview Card -->
+          <div class="ios-card p-2.5">
+            <div id="compareBox" class="compare-container w-full aspect-[9/14] max-h-[460px] flex items-center justify-center relative">
+              <!-- Optimized (After) Canvas -->
+              <canvas id="afterCanvas" class="w-full h-full object-contain block"></canvas>
+
+              <!-- Original (Before) Clipped Layer -->
+              <div id="beforeClip" class="absolute inset-0 overflow-hidden" style="clip-path: inset(0 50% 0 0);">
+                <canvas id="beforeCanvas" class="w-full h-full object-contain block"></canvas>
+              </div>
+
+              <!-- Labels -->
+              <span class="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black/55 text-white backdrop-blur-md pointer-events-none">
+                Original
+              </span>
+              <span class="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-ios-blue/85 text-white backdrop-blur-md pointer-events-none">
+                StatusHD
+              </span>
+
+              <!-- Draggable Divider Handle -->
+              <div id="compareHandle" class="compare-handle" style="left: 50%;">
+                <div class="compare-knob">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l-3 3 3 3m8-6l3 3-3 3"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Processing Spinner Overlay -->
+              <div id="photoProcessing" class="hidden absolute inset-0 z-30 bg-black/35 backdrop-blur-xs flex items-center justify-center">
+                <div class="px-3.5 py-2 rounded-full bg-black/75 text-white text-xs font-semibold flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>
+                  </svg>
+                  Enhancing...
+                </div>
+              </div>
+            </div>
+            <p class="text-center text-[11px] text-[var(--text-secondary)] mt-2 font-medium">
+              Drag slider across preview to compare Before & After
+            </p>
+          </div>
+
+          <!-- Horizontal Preset Pills -->
+          <div>
+            <div class="flex items-center justify-between px-1 mb-2">
+              <span class="text-[12px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]">HD Presets</span>
+              <span id="photoResLabel" class="text-[12px] font-medium text-[var(--text-secondary)]">1080 × 1920</span>
+            </div>
+            <div id="photoPresets" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              <button data-preset="wa916" class="preset-chip ios-tap shrink-0 px-3.5 py-2 rounded-full text-[13px] font-semibold bg-ios-blue text-white shadow-sm">
+                WA Status 9:16
+              </button>
+              <button data-preset="original" class="preset-chip ios-tap shrink-0 px-3.5 py-2 rounded-full text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                Original HD
+              </button>
+              <button data-preset="ultrasharp" class="preset-chip ios-tap shrink-0 px-3.5 py-2 rounded-full text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                Ultra Sharp
+              </button>
+              <button data-preset="blurfit" class="preset-chip ios-tap shrink-0 px-3.5 py-2 rounded-full text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                Zero-Crop Blur
+              </button>
+            </div>
+          </div>
+
+          <!-- Fine-Tune iOS Sliders (Collapsible Card) -->
+          <div class="ios-card overflow-hidden">
+            <button id="toggleFineTune" class="w-full px-4 py-3.5 flex items-center justify-between text-left">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-ios-blue/15 text-ios-blue flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-[14px] font-semibold">Fine-Tune Engine</div>
+                  <div class="text-[11px] text-[var(--text-secondary)]">Anti-Blur Sharpness, Vibrance & Compression</div>
+                </div>
+              </div>
+              <svg id="fineTuneChevron" class="w-4 h-4 text-[var(--text-secondary)] transition-transform duration-200 rotate-180" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <div id="fineTuneBody" class="px-4 pb-4 pt-1 space-y-4 border-t border-[var(--hairline)]">
+              <!-- Sharpness / Anti-Blur -->
+              <div class="pt-2">
+                <div class="flex justify-between text-[13px] mb-1.5">
+                  <span class="font-medium">Sharpness (Anti-Blur)</span>
+                  <span id="sharpVal" class="font-semibold text-ios-blue tabular-nums">35%</span>
+                </div>
+                <input id="sharpSlider" type="range" min="0" max="100" value="35" class="ios-slider" />
+              </div>
+
+              <!-- Contrast & Vibrance -->
+              <div>
+                <div class="flex justify-between text-[13px] mb-1.5">
+                  <span class="font-medium">Contrast & Vibrance</span>
+                  <span id="vibranceVal" class="font-semibold text-ios-blue tabular-nums">+12%</span>
+                </div>
+                <input id="vibranceSlider" type="range" min="-20" max="50" value="12" class="ios-slider" />
+              </div>
+
+              <!-- Compression Quality -->
+              <div>
+                <div class="flex justify-between text-[13px] mb-1.5">
+                  <span class="font-medium">JPEG Quality Target</span>
+                  <span id="qualityVal" class="font-semibold text-ios-blue tabular-nums">92%</span>
+                </div>
+                <input id="qualitySlider" type="range" min="75" max="98" value="92" class="ios-slider" />
+                <p class="text-[11px] text-[var(--text-secondary)] mt-1.5">
+                  Sweet spot: Keep under <span class="font-semibold text-[var(--text-primary)]">1.2 MB</span> so WhatsApp skips heavy re-compression.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== VIDEO MODE ==================== -->
+      <section id="videoSection" class="hidden space-y-4">
+
+        <!-- Video Dropzone -->
+        <div id="videoDropzone" class="ios-card p-7 text-center cursor-pointer transition-all hover:border-ios-blue/50 active:scale-[0.99]">
+          <input id="videoInput" type="file" accept="video/*" class="hidden" />
+          <div class="w-14 h-14 mx-auto mb-3.5 rounded-[18px] bg-ios-green/12 border border-ios-green/20 flex items-center justify-center">
+            <svg class="w-7 h-7 text-ios-green" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h2 class="text-[17px] font-semibold tracking-tight">Select Video for Status</h2>
+          <p class="text-[13px] text-[var(--text-secondary)] mt-1 max-w-[260px] mx-auto leading-snug">
+            Optimize bitrate, trim to 15s / 30s / 60s, and fit 9:16 cleanly right in your browser.
+          </p>
+          <div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--pill-bg)] text-[11px] font-medium text-[var(--text-secondary)]">
+            <span class="w-1.5 h-1.5 rounded-full bg-ios-blue"></span>
+            MP4, MOV, WEBM • Audio Preserved
+          </div>
+        </div>
+
+        <!-- Video Workspace -->
+        <div id="videoWorkspace" class="hidden space-y-4">
+
+          <!-- Video Meta Pill -->
+          <div class="flex items-center justify-between gap-2 px-3.5 py-2.5 ios-card !rounded-2xl">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="videoStatusDot" class="w-2 h-2 rounded-full bg-ios-blue shrink-0"></span>
+              <span id="videoMetaText" class="text-[12px] font-medium truncate">Loaded video</span>
+            </div>
+            <span id="videoDurationBadge" class="shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[var(--pill-bg)] text-[var(--text-primary)] tabular-nums">
+              00:00
+            </span>
+          </div>
+
+          <!-- Video Preview Player -->
+          <div class="ios-card p-2.5">
+            <div class="relative rounded-[16px] overflow-hidden bg-black aspect-[9/14] max-h-[420px] flex items-center justify-center">
+              <video id="videoPreview" playsinline controls class="w-full h-full object-contain"></video>
+              <!-- Encoding Overlay -->
+              <div id="videoEncodingOverlay" class="hidden absolute inset-0 z-20 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                <div class="relative w-20 h-20 mb-4">
+                  <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="5"></circle>
+                    <circle id="encodeRing" cx="40" cy="40" r="34" fill="none" stroke="#0A84FF" stroke-width="5" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"></circle>
+                  </svg>
+                  <span id="encodePercent" class="absolute inset-0 flex items-center justify-center text-[16px] font-bold text-white tabular-nums">0%</span>
+                </div>
+                <h3 class="text-[16px] font-semibold text-white">Optimizing HD Video...</h3>
+                <p id="encodeSubtext" class="text-[12px] text-white/70 mt-1">Encoding frames & audio in real-time. Keep screen open.</p>
+                <button id="cancelEncodeBtn" class="ios-tap mt-4 px-4 py-1.5 rounded-full bg-white/15 text-white text-[12px] font-semibold">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- WhatsApp Status Trim Controls -->
+          <div class="ios-card p-4 space-y-3.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[13px] font-semibold">Status Trim Window</span>
+              <span id="trimRangeLabel" class="text-[12px] font-semibold text-ios-blue tabular-nums">0.0s → 30.0s</span>
+            </div>
+
+            <!-- Visual Timeline Bar -->
+            <div class="relative h-8 rounded-xl bg-[var(--pill-bg)] border border-[var(--hairline)] overflow-hidden">
+              <div id="timelineWindow" class="absolute top-0 bottom-0 bg-ios-blue/25 border-x-2 border-ios-blue transition-all duration-150" style="left: 0%; width: 100%;"></div>
+              <div class="absolute inset-0 flex items-center justify-between px-3 pointer-events-none text-[10px] font-semibold text-[var(--text-secondary)]">
+                <span>0s</span>
+                <span id="timelineTotalLabel">0s</span>
+              </div>
+            </div>
+
+            <!-- Start Time Slider -->
+            <div>
+              <div class="flex justify-between text-[12px] text-[var(--text-secondary)] mb-1">
+                <span>Start Time</span>
+                <span id="startTimeVal" class="font-semibold text-[var(--text-primary)] tabular-nums">0.0s</span>
+              </div>
+              <input id="videoStartSlider" type="range" min="0" max="0" step="0.1" value="0" class="ios-slider" />
+            </div>
+
+            <!-- Clip Duration Pills -->
+            <div class="grid grid-cols-3 gap-2 pt-1">
+              <button data-dur="15" class="dur-btn ios-tap py-2 rounded-xl text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                15s Clip
+              </button>
+              <button data-dur="30" class="dur-btn ios-tap py-2 rounded-xl text-[13px] font-semibold bg-ios-blue text-white">
+                30s Status
+              </button>
+              <button data-dur="60" class="dur-btn ios-tap py-2 rounded-xl text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                60s Max
+              </button>
+            </div>
+          </div>
+
+          <!-- Aspect Ratio & Bitrate Settings -->
+          <div class="ios-card p-4 space-y-4">
+            <!-- Aspect Ratio -->
+            <div>
+              <span class="block text-[12px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Aspect Ratio</span>
+              <div class="grid grid-cols-3 gap-2">
+                <button data-ratio="original" class="ratio-btn ios-tap py-2 px-2 rounded-xl text-[12px] font-semibold bg-ios-blue text-white">
+                  Original
+                </button>
+                <button data-ratio="blurfit" class="ratio-btn ios-tap py-2 px-2 rounded-xl text-[12px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                  9:16 Blur BG
+                </button>
+                <button data-ratio="fill" class="ratio-btn ios-tap py-2 px-2 rounded-xl text-[12px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]">
+                  9:16 Fill
+                </button>
+              </div>
+            </div>
+
+            <!-- Bitrate / Quality Selector -->
+            <div class="pt-2 border-t border-[var(--hairline)]">
+              <span class="block text-[12px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Anti-Compression Bitrate</span>
+              <div class="grid grid-cols-2 gap-2">
+                <button data-bitrate="2500000" class="bitrate-btn ios-tap p-2.5 rounded-xl text-left bg-ios-blue/15 border border-ios-blue text-[var(--text-primary)]">
+                  <div class="text-[13px] font-semibold">Balanced HD</div>
+                  <div class="text-[11px] text-[var(--text-secondary)]">2.5 Mbps • Sweet Spot</div>
+                </button>
+                <button data-bitrate="4000000" class="bitrate-btn ios-tap p-2.5 rounded-xl text-left bg-[var(--pill-bg)] border border-[var(--hairline)] text-[var(--text-primary)]">
+                  <div class="text-[13px] font-semibold">Max Crisp</div>
+                  <div class="text-[11px] text-[var(--text-secondary)]">4.0 Mbps • Ultra Detail</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Render HD Video Button -->
+            <button id="renderVideoBtn" class="ios-tap w-full py-3 rounded-2xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-semibold text-[14px] flex items-center justify-center gap-2 shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span id="renderVideoBtnText">Process & Optimize Video</span>
+            </button>
+
+            <!-- Output Ready Banner -->
+            <div id="videoReadyBanner" class="hidden p-3 rounded-xl bg-ios-green/12 border border-ios-green/25 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-ios-green"></span>
+                <span id="videoOutputMeta" class="text-[12px] font-semibold text-ios-green">HD Video Ready!</span>
+              </div>
+              <span class="text-[11px] font-medium text-[var(--text-secondary)]">Tap Save HD below</span>
+            </div>
+          </div>
+
+          <!-- Hidden Offscreen Canvas for Video Encoding -->
+          <canvas id="videoEncodeCanvas" class="hidden"></canvas>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Sticky Bottom iOS Glass Action Bar -->
+    <footer class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-30 ios-glass border-t border-[var(--hairline)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div class="flex items-center gap-2.5">
+        <!-- Reset / New Button -->
+        <button id="resetBtn" disabled class="ios-tap w-12 h-12 rounded-2xl bg-[var(--pill-bg)] border border-[var(--hairline)] flex items-center justify-center text-[var(--text-primary)] disabled:opacity-35 disabled:pointer-events-none" title="Reset / New" aria-label="Reset">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+
+        <!-- Secondary: Share Button -->
+        <button id="shareBtn" disabled class="ios-tap h-12 px-4 rounded-2xl bg-[var(--pill-bg)] border border-[var(--hairline)] font-semibold text-[14px] flex items-center justify-center gap-1.5 text-[var(--text-primary)] disabled:opacity-35 disabled:pointer-events-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          Share
+        </button>
+
+        <!-- Primary: Save HD Button -->
+        <button id="saveBtn" disabled class="ios-tap flex-1 h-12 rounded-2xl bg-ios-blue text-white font-semibold text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-35 disabled:pointer-events-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Save HD
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==================== iOS BOTTOM SHEET: TIPS MODAL ==================== -->
+  <div id="tipsSheet" class="sheet-backdrop fixed inset-0 z-50 bg-black/55 backdrop-blur-sm flex items-end justify-center">
+    <div class="sheet-panel w-full max-w-[480px] bg-[var(--bg-card)] border-t border-x border-[var(--hairline)] rounded-t-[28px] p-5 pb-8 shadow-2xl">
+      <!-- Grabber Handle -->
+      <div class="w-10 h-1.5 rounded-full bg-[var(--text-secondary)]/35 mx-auto mb-4"></div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[19px] font-bold tracking-tight">Why WhatsApp Blurs Status</h2>
+        <button id="closeTipsBtn" class="ios-tap w-8 h-8 rounded-full bg-[var(--pill-bg)] flex items-center justify-center text-[var(--text-secondary)]">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+        <div class="ios-subcard p-3.5 flex gap-3">
+          <div class="w-8 h-8 rounded-xl bg-ios-blue/15 text-ios-blue flex items-center justify-center shrink-0 font-bold text-xs">1</div>
+          <div>
+            <div class="font-semibold text-[var(--text-primary)] mb-0.5">Exact 1080 × 1920 Resolution</div>
+            WhatsApp downscales oversized 4K photos aggressively. Pre-scaling to exact 1080p stops WhatsApp's harsh resizer from smearing fine details.
+          </div>
+        </div>
+
+        <div class="ios-subcard p-3.5 flex gap-3">
+          <div class="w-8 h-8 rounded-xl bg-ios-green/15 text-ios-green flex items-center justify-center shrink-0 font-bold text-xs">2</div>
+          <div>
+            <div class="font-semibold text-[var(--text-primary)] mb-0.5">Stay in the File Size Sweet Spot</div>
+            Keep photos under <span class="font-semibold text-[var(--text-primary)]">1.2 MB</span> and videos at <span class="font-semibold text-[var(--text-primary)]">2.5–4 Mbps</span>. Files in this range pass through WhatsApp's servers with minimal re-encoding.
+          </div>
+        </div>
+
+        <div class="ios-subcard p-3.5 flex gap-3">
+          <div class="w-8 h-8 rounded-xl bg-ios-orange/15 text-ios-orange flex items-center justify-center shrink-0 font-bold text-xs">3</div>
+          <div>
+            <div class="font-semibold text-[var(--text-primary)] mb-0.5">Pre-Sharpen & Toggle "HD" on Upload</div>
+            Our anti-blur unsharp mask compensates for WhatsApp's slight softening. When posting on WhatsApp Status, always tap the <span class="font-semibold text-[var(--text-primary)]">HD</span> icon at the top if available.
+          </div>
+        </div>
+      </div>
+
+      <button id="gotItBtn" class="ios-tap w-full mt-5 py-3.5 rounded-2xl bg-ios-blue text-white font-semibold text-[15px]">
+        Got It
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script>
+    (() => {
+      'use strict';
+
+      /* =====================================================================
+         1. STATE & DOM REFERENCES
+         ===================================================================== */
+      const state = {
+        mode: 'photo', // 'photo' | 'video'
+        theme: 'dark',
+        photo: {
+          file: null,
+          img: null,
+          origW: 0,
+          origH: 0,
+          origSize: 0,
+          preset: 'wa916', // 'wa916' | 'original' | 'ultrasharp' | 'blurfit'
+          sharpness: 35,
+          vibrance: 12,
+          quality: 92,
+          outputBlob: null,
+          outW: 0,
+          outH: 0,
+          comparePos: 50,
+          renderTimer: null,
+        },
+        video: {
+          file: null,
+          url: null,
+          duration: 0,
+          startTime: 0,
+          clipDuration: 30,
+          ratio: 'original', // 'original' | 'blurfit' | 'fill'
+          bitrate: 2500000,
+          isEncoding: false,
+          cancelRequested: false,
+          outputBlob: null,
+          outputExt: 'mp4',
+          audioCtx: null,
+          audioSource: null,
+          audioDest: null,
+        }
+      };
+
+      // DOM elements
+      const el = {
+        html: document.documentElement,
+        toast: document.getElementById('toast'),
+        toastDot: document.getElementById('toastDot'),
+        toastMsg: document.getElementById('toastMsg'),
+        themeToggle: document.getElementById('themeToggle'),
+        sunIcon: document.getElementById('sunIcon'),
+        moonIcon: document.getElementById('moonIcon'),
+        tipsBtn: document.getElementById('tipsBtn'),
+        tipsSheet: document.getElementById('tipsSheet'),
+        closeTipsBtn: document.getElementById('closeTipsBtn'),
+        gotItBtn: document.getElementById('gotItBtn'),
+
+        // Tabs
+        segmentedPill: document.getElementById('segmentedPill'),
+        tabPhoto: document.getElementById('tabPhoto'),
+        tabVideo: document.getElementById('tabVideo'),
+        photoSection: document.getElementById('photoSection'),
+        videoSection: document.getElementById('videoSection'),
+
+        // Photo
+        photoDropzone: document.getElementById('photoDropzone'),
+        photoInput: document.getElementById('photoInput'),
+        photoWorkspace: document.getElementById('photoWorkspace'),
+        photoStatusDot: document.getElementById('photoStatusDot'),
+        photoMetaText: document.getElementById('photoMetaText'),
+        photoWaBadge: document.getElementById('photoWaBadge'),
+        photoResLabel: document.getElementById('photoResLabel'),
+        compareBox: document.getElementById('compareBox'),
+        beforeClip: document.getElementById('beforeClip'),
+        compareHandle: document.getElementById('compareHandle'),
+        beforeCanvas: document.getElementById('beforeCanvas'),
+        afterCanvas: document.getElementById('afterCanvas'),
+        photoProcessing: document.getElementById('photoProcessing'),
+        toggleFineTune: document.getElementById('toggleFineTune'),
+        fineTuneBody: document.getElementById('fineTuneBody'),
+        fineTuneChevron: document.getElementById('fineTuneChevron'),
+        sharpSlider: document.getElementById('sharpSlider'),
+        sharpVal: document.getElementById('sharpVal'),
+        vibranceSlider: document.getElementById('vibranceSlider'),
+        vibranceVal: document.getElementById('vibranceVal'),
+        qualitySlider: document.getElementById('qualitySlider'),
+        qualityVal: document.getElementById('qualityVal'),
+
+        // Video
+        videoDropzone: document.getElementById('videoDropzone'),
+        videoInput: document.getElementById('videoInput'),
+        videoWorkspace: document.getElementById('videoWorkspace'),
+        videoMetaText: document.getElementById('videoMetaText'),
+        videoDurationBadge: document.getElementById('videoDurationBadge'),
+        videoPreview: document.getElementById('videoPreview'),
+        videoEncodingOverlay: document.getElementById('videoEncodingOverlay'),
+        encodeRing: document.getElementById('encodeRing'),
+        encodePercent: document.getElementById('encodePercent'),
+        encodeSubtext: document.getElementById('encodeSubtext'),
+        cancelEncodeBtn: document.getElementById('cancelEncodeBtn'),
+        trimRangeLabel: document.getElementById('trimRangeLabel'),
+        timelineWindow: document.getElementById('timelineWindow'),
+        timelineTotalLabel: document.getElementById('timelineTotalLabel'),
+        startTimeVal: document.getElementById('startTimeVal'),
+        videoStartSlider: document.getElementById('videoStartSlider'),
+        renderVideoBtn: document.getElementById('renderVideoBtn'),
+        renderVideoBtnText: document.getElementById('renderVideoBtnText'),
+        videoReadyBanner: document.getElementById('videoReadyBanner'),
+        videoOutputMeta: document.getElementById('videoOutputMeta'),
+        videoEncodeCanvas: document.getElementById('videoEncodeCanvas'),
+
+        // Bottom Bar
+        resetBtn: document.getElementById('resetBtn'),
+        shareBtn: document.getElementById('shareBtn'),
+        saveBtn: document.getElementById('saveBtn'),
+      };
+
+      /* =====================================================================
+         2. UTILITIES (Formatters, Toast, Theme, Bottom Sheet)
+         ===================================================================== */
+      let toastTimeout = null;
+      function showToast(msg, type = 'success') {
+        el.toastMsg.textContent = msg;
+        el.toastDot.className = 'w-2 h-2 rounded-full ' + (
+          type === 'error' ? 'bg-ios-red' :
+          type === 'info' ? 'bg-ios-blue' : 'bg-ios-green'
+        );
+        el.toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => el.toast.classList.remove('show'), 2600);
+      }
+
+      function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return '0 KB';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function formatTime(sec) {
+        const s = Math.max(0, sec);
+        const mins = Math.floor(s / 60);
+        const rem = Math.floor(s % 60);
+        return `${String(mins).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+      }
+
+      function updateActionButtons() {
+        const hasPhoto = state.mode === 'photo' && !!state.photo.outputBlob;
+        const hasVideoSource = state.mode === 'video' && !!state.video.file;
+        const hasVideoOutput = state.mode === 'video' && !!state.video.outputBlob;
+
+        el.resetBtn.disabled = !(state.mode === 'photo' ? !!state.photo.file : hasVideoSource);
+        el.saveBtn.disabled = !(hasPhoto || hasVideoOutput);
+        el.shareBtn.disabled = !(hasPhoto || hasVideoOutput);
+      }
+
+      // Theme Toggle
+      el.themeToggle.addEventListener('click', () => {
+        const isDark = el.html.classList.toggle('dark');
+        state.theme = isDark ? 'dark' : 'light';
+        el.sunIcon.classList.toggle('hidden', !isDark);
+        el.moonIcon.classList.toggle('hidden', isDark);
+      });
+
+      // Tips Bottom Sheet
+      function openTips() { el.tipsSheet.classList.add('open'); }
+      function closeTips() { el.tipsSheet.classList.remove('open'); }
+      el.tipsBtn.addEventListener('click', openTips);
+      el.closeTipsBtn.addEventListener('click', closeTips);
+      el.gotItBtn.addEventListener('click', closeTips);
+      el.tipsSheet.addEventListener('click', (e) => {
+        if (e.target === el.tipsSheet) closeTips();
+      });
+
+      // Mode Segmented Switcher
+      function switchMode(mode) {
+        if (state.video.isEncoding) {
+          showToast('Wait for video encoding to finish', 'info');
+          return;
+        }
+        state.mode = mode;
+        const isPhoto = mode === 'photo';
+        el.segmentedPill.style.transform = isPhoto ? 'translateX(0%)' : 'translateX(100%)';
+        el.tabPhoto.style.color = isPhoto ? 'var(--text-primary)' : 'var(--text-secondary)';
+        el.tabVideo.style.color = !isPhoto ? 'var(--text-primary)' : 'var(--text-secondary)';
+        el.tabPhoto.setAttribute('aria-selected', isPhoto);
+        el.tabVideo.setAttribute('aria-selected', !isPhoto);
+
+        el.photoSection.classList.toggle('hidden', !isPhoto);
+        el.videoSection.classList.toggle('hidden', isPhoto);
+        updateActionButtons();
+      }
+      el.tabPhoto.addEventListener('click', () => switchMode('photo'));
+      el.tabVideo.addEventListener('click', () => switchMode('video'));
+
+      /* =====================================================================
+         3. PHOTO HD ENGINE (HTML5 Canvas + Convolution Unsharp Mask)
+         ===================================================================== */
+      // Drag & drop + click upload
+      el.photoDropzone.addEventListener('click', () => el.photoInput.click());
+      el.photoDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        el.photoDropzone.classList.add('border-ios-blue');
+      });
+      el.photoDropzone.addEventListener('dragleave', () => {
+        el.photoDropzone.classList.remove('border-ios-blue');
+      });
+      el.photoDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        el.photoDropzone.classList.remove('border-ios-blue');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) loadPhotoFile(file);
+        else showToast('Please drop a valid image file', 'error');
+      });
+      el.photoInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) loadPhotoFile(e.target.files[0]);
+      });
+
+      function loadPhotoFile(file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            state.photo.file = file;
+            state.photo.img = img;
+            state.photo.origW = img.naturalWidth;
+            state.photo.origH = img.naturalHeight;
+            state.photo.origSize = file.size;
+
+            el.photoDropzone.classList.add('hidden');
+            el.photoWorkspace.classList.remove('hidden');
+            schedulePhotoRender(true);
+            showToast('Photo loaded • HD Engine active');
+          };
+          img.onerror = () => showToast('Could not read image format', 'error');
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Preset Selection
+      document.querySelectorAll('.preset-chip').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const preset = btn.dataset.preset;
+          state.photo.preset = preset;
+
+          // Update chip styling
+          document.querySelectorAll('.preset-chip').forEach((b) => {
+            const active = b === btn;
+            b.className = active
+              ? 'preset-chip ios-tap shrink-0 px-3.5 py-2 rounded-full text-[13px] font-semibold bg-ios-blue text-white shadow-sm'
+              : 'preset-chip ios-tap shrink-0 px-3.5 py-2 rounded-full text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]';
+          });
+
+          // Apply smart defaults per preset
+          if (preset === 'ultrasharp') {
+            setPhotoSliders(68, 18, 94);
+          } else if (preset === 'wa916') {
+            setPhotoSliders(35, 12, 92);
+          } else if (preset === 'original') {
+            setPhotoSliders(30, 8, 92);
+          } else if (preset === 'blurfit') {
+            setPhotoSliders(40, 14, 91);
+          }
+
+          schedulePhotoRender(true);
+        });
+      });
+
+      function setPhotoSliders(sharp, vib, qual) {
+        state.photo.sharpness = sharp;
+        state.photo.vibrance = vib;
+        state.photo.quality = qual;
+        el.sharpSlider.value = sharp;
+        el.vibranceSlider.value = vib;
+        el.qualitySlider.value = qual;
+        el.sharpVal.textContent = sharp + '%';
+        el.vibranceVal.textContent = (vib >= 0 ? '+' : '') + vib + '%';
+        el.qualityVal.textContent = qual + '%';
+      }
+
+      // Fine-Tune Collapsible
+      el.toggleFineTune.addEventListener('click', () => {
+        const isHidden = el.fineTuneBody.classList.toggle('hidden');
+        el.fineTuneChevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+      });
+
+      // Sliders listeners
+      el.sharpSlider.addEventListener('input', (e) => {
+        state.photo.sharpness = parseInt(e.target.value, 10);
+        el.sharpVal.textContent = state.photo.sharpness + '%';
+        schedulePhotoRender();
+      });
+      el.vibranceSlider.addEventListener('input', (e) => {
+        state.photo.vibrance = parseInt(e.target.value, 10);
+        el.vibranceVal.textContent = (state.photo.vibrance >= 0 ? '+' : '') + state.photo.vibrance + '%';
+        schedulePhotoRender();
+      });
+      el.qualitySlider.addEventListener('input', (e) => {
+        state.photo.quality = parseInt(e.target.value, 10);
+        el.qualityVal.textContent = state.photo.quality + '%';
+        schedulePhotoRender();
+      });
+
+      function schedulePhotoRender(immediate = false) {
+        clearTimeout(state.photo.renderTimer);
+        el.photoProcessing.classList.remove('hidden');
+        state.photo.renderTimer = setTimeout(() => {
+          renderPhotoHD();
+        }, immediate ? 20 : 90);
+      }
+
+      /**
+       * Draws image to target canvas with cover, contain, or blur-fit logic.
+       */
+      function drawPhotoLayout(ctx, img, targetW, targetH, preset) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.clearRect(0, 0, targetW, targetH);
+
+        const imgAspect = img.naturalWidth / img.naturalHeight;
+        const targetAspect = targetW / targetH;
+
+        if (preset === 'blurfit') {
+          // 1. Aesthetic blurred background fill
+          ctx.save();
+          ctx.filter = 'blur(38px) brightness(0.65) saturate(1.25)';
+          const scaleFill = Math.max(targetW / img.naturalWidth, targetH / img.naturalHeight) * 1.15;
+          const bw = img.naturalWidth * scaleFill;
+          const bh = img.naturalHeight * scaleFill;
+          ctx.drawImage(img, (targetW - bw) / 2, (targetH - bh) / 2, bw, bh);
+          ctx.restore();
+
+          // 2. Crisp centered foreground photo with soft shadow
+          const pad = Math.round(targetW * 0.045);
+          const maxW = targetW - pad * 2;
+          const maxH = targetH - pad * 2;
+          const scaleFit = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+          const fw = Math.round(img.naturalWidth * scaleFit);
+          const fh = Math.round(img.naturalHeight * scaleFit);
+          const fx = Math.round((targetW - fw) / 2);
+          const fy = Math.round((targetH - fh) / 2);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.45)';
+          ctx.shadowBlur = 40;
+          ctx.shadowOffsetY = 14;
+          drawRoundedRectPath(ctx, fx, fy, fw, fh, 26);
+          ctx.fillStyle = '#000';
+          ctx.fill();
+          ctx.restore();
+
+          ctx.save();
+          drawRoundedRectPath(ctx, fx, fy, fw, fh, 26);
+          ctx.clip();
+          ctx.drawImage(img, fx, fy, fw, fh);
+          ctx.restore();
+        } else if (preset === 'wa916') {
+          // Smart cover crop to 1080x1920
+          let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+          if (imgAspect > targetAspect) {
+            sw = img.naturalHeight * targetAspect;
+            sx = (img.naturalWidth - sw) / 2;
+          } else {
+            sh = img.naturalWidth / targetAspect;
+            sy = (img.naturalHeight - sh) / 2;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+        } else {
+          // Original HD & Ultra Sharp preserve aspect ratio
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+        }
+      }
+
+      function drawRoundedRectPath(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      /**
+       * Real 3x3 Convolution Unsharp Mask + Contrast/Vibrance Enhancement on Canvas Pixel Data
+       */
+      function applyHDFilters(ctx, width, height, sharpnessPct, vibrancePct) {
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        const len = data.length;
+
+        // 1. Contrast & Vibrance pass
+        if (vibrancePct !== 0) {
+          const contrastFactor = 1 + (vibrancePct * 0.0045);
+          const satBoost = vibrancePct * 0.008;
+          for (let i = 0; i < len; i += 4) {
+            let r = data[i];
+            let g = data[i + 1];
+            let b = data[i + 2];
+
+            // Contrast around mid-gray (128)
+            r = (r - 128) * contrastFactor + 128;
+            g = (g - 128) * contrastFactor + 128;
+            b = (b - 128) * contrastFactor + 128;
+
+            // Smart Vibrance (boosts less-saturated pixels more than already vivid ones)
+            const max = Math.max(r, g, b);
+            const avg = (r + g + b) / 3;
+            const amt = ((Math.abs(max - avg) * 2) / 255) * -satBoost + satBoost;
+
+            if (r !== max) r += (max - r) * -amt;
+            if (g !== max) g += (max - g) * -amt;
+            if (b !== max) b += (max - b) * -amt;
+
+            data[i] = r < 0 ? 0 : r > 255 ? 255 : r;
+            data[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+            data[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+          }
+        }
+
+        // 2. 3x3 Unsharp Mask Convolution Kernel (Anti-Blur)
+        if (sharpnessPct > 0) {
+          const amount = (sharpnessPct / 100) * 0.85; // Balanced to prevent harsh halos
+          const copy = new Uint8ClampedArray(data);
+          const rowStride = width * 4;
+
+          for (let y = 1; y < height - 1; y++) {
+            const yOffset = y * rowStride;
+            for (let x = 1; x < width - 1; x++) {
+              const idx = yOffset + x * 4;
+              const up = idx - rowStride;
+              const down = idx + rowStride;
+              const left = idx - 4;
+              const right = idx + 4;
+
+              // Center * (1 + 4*amount) - neighbors * amount
+              for (let c = 0; c < 3; c++) {
+                const center = copy[idx + c];
+                const blurAvg = (copy[up + c] + copy[down + c] + copy[left + c] + copy[right + c]) * 0.25;
+                const val = center + (center - blurAvg) * (amount * 2.2);
+                data[idx + c] = val < 0 ? 0 : val > 255 ? 255 : val;
+              }
+            }
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      function renderPhotoHD() {
+        const img = state.photo.img;
+        if (!img) return;
+
+        try {
+          // Determine target dimensions
+          let targetW, targetH;
+          if (state.photo.preset === 'wa916' || state.photo.preset === 'blurfit') {
+            targetW = 1080;
+            targetH = 1920;
+          } else {
+            // Original HD or Ultra Sharp: cap longest edge at 1600px (WhatsApp's HD photo sweet spot)
+            const maxEdge = 1600;
+            const scale = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
+            targetW = Math.round(img.naturalWidth * scale);
+            targetH = Math.round(img.naturalHeight * scale);
+          }
+
+          state.photo.outW = targetW;
+          state.photo.outH = targetH;
+          el.photoResLabel.textContent = `${targetW} × ${targetH}`;
+
+          // Resize both before & after canvases to match exact output dimensions
+          el.beforeCanvas.width = targetW;
+          el.beforeCanvas.height = targetH;
+          el.afterCanvas.width = targetW;
+          el.afterCanvas.height = targetH;
+
+          const bCtx = el.beforeCanvas.getContext('2d', { willReadFrequently: true });
+          const aCtx = el.afterCanvas.getContext('2d', { willReadFrequently: true });
+
+          // Draw baseline layout to Before Canvas
+          drawPhotoLayout(bCtx, img, targetW, targetH, state.photo.preset);
+
+          // Copy to After Canvas and apply HD Filters
+          aCtx.drawImage(el.beforeCanvas, 0, 0);
+          applyHDFilters(aCtx, targetW, targetH, state.photo.sharpness, state.photo.vibrance);
+
+          // Export JPEG blob to inspect real file size
+          const qualityFloat = state.photo.quality / 100;
+          el.afterCanvas.toBlob((blob) => {
+            if (!blob) {
+              el.photoProcessing.classList.add('hidden');
+              return;
+            }
+            state.photo.outputBlob = blob;
+
+            const origTxt = formatBytes(state.photo.origSize);
+            const outTxt = formatBytes(blob.size);
+            el.photoMetaText.textContent = `${origTxt} → ${outTxt} • ${targetW}×${targetH}`;
+
+            // Smart WA Target Size Badge (< 1.2MB is ideal)
+            const isOptimal = blob.size <= 1.2 * 1024 * 1024;
+            if (isOptimal) {
+              el.photoStatusDot.className = 'w-2 h-2 rounded-full bg-ios-green shrink-0';
+              el.photoWaBadge.className = 'shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-ios-green/15 text-ios-green';
+              el.photoWaBadge.textContent = 'Optimal for WA';
+            } else {
+              el.photoStatusDot.className = 'w-2 h-2 rounded-full bg-ios-orange shrink-0';
+              el.photoWaBadge.className = 'shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-ios-orange/15 text-ios-orange';
+              el.photoWaBadge.textContent = 'Lower Quality';
+            }
+
+            el.photoProcessing.classList.add('hidden');
+            updateActionButtons();
+          }, 'image/jpeg', qualityFloat);
+        } catch (err) {
+          console.error('Photo render error:', err);
+          el.photoProcessing.classList.add('hidden');
+          showToast('Error enhancing photo', 'error');
+        }
+      }
+
+      // Interactive Before / After Slider (Mouse & Touch)
+      let isDraggingCompare = false;
+      function updateComparePosition(clientX) {
+        const rect = el.compareBox.getBoundingClientRect();
+        let pct = ((clientX - rect.left) / rect.width) * 100;
+        pct = Math.max(0, Math.min(100, pct));
+        state.photo.comparePos = pct;
+        el.beforeClip.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+        el.compareHandle.style.left = `${pct}%`;
+      }
+
+      el.compareBox.addEventListener('mousedown', (e) => {
+        isDraggingCompare = true;
+        updateComparePosition(e.clientX);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (isDraggingCompare) updateComparePosition(e.clientX);
+      });
+      window.addEventListener('mouseup', () => { isDraggingCompare = false; });
+
+      el.compareBox.addEventListener('touchstart', (e) => {
+        isDraggingCompare = true;
+        if (e.touches[0]) updateComparePosition(e.touches[0].clientX);
+      }, { passive: true });
+      el.compareBox.addEventListener('touchmove', (e) => {
+        if (isDraggingCompare && e.touches[0]) {
+          updateComparePosition(e.touches[0].clientX);
+        }
+      }, { passive: true });
+      el.compareBox.addEventListener('touchend', () => { isDraggingCompare = false; });
+
+      /* =====================================================================
+         4. VIDEO HD ENGINE (Canvas + Web Audio + MediaRecorder)
+         ===================================================================== */
+      el.videoDropzone.addEventListener('click', () => el.videoInput.click());
+      el.videoDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        el.videoDropzone.classList.add('border-ios-green');
+      });
+      el.videoDropzone.addEventListener('dragleave', () => {
+        el.videoDropzone.classList.remove('border-ios-green');
+      });
+      el.videoDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        el.videoDropzone.classList.remove('border-ios-green');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('video/')) loadVideoFile(file);
+        else showToast('Please drop a valid video file', 'error');
+      });
+      el.videoInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) loadVideoFile(e.target.files[0]);
+      });
+
+      function loadVideoFile(file) {
+        if (state.video.url) URL.revokeObjectURL(state.video.url);
+        const url = URL.createObjectURL(file);
+        state.video.file = file;
+        state.video.url = url;
+        state.video.outputBlob = null;
+        el.videoReadyBanner.classList.add('hidden');
+
+        el.videoPreview.src = url;
+        el.videoPreview.onloadedmetadata = () => {
+          const dur = el.videoPreview.duration || 0;
+          state.video.duration = dur;
+          state.video.startTime = 0;
+
+          el.videoDropzone.classList.add('hidden');
+          el.videoWorkspace.classList.remove('hidden');
+          el.videoDurationBadge.textContent = formatTime(dur);
+          el.timelineTotalLabel.textContent = dur.toFixed(1) + 's';
+          el.videoMetaText.textContent = `${formatBytes(file.size)} • ${el.videoPreview.videoWidth}×${el.videoPreview.videoHeight}`;
+
+          updateVideoTrimUI();
+          updateActionButtons();
+          showToast('Video loaded • Set trim & optimize');
+        };
+        el.videoPreview.onerror = () => showToast('Unsupported video format', 'error');
+      }
+
+      function updateVideoTrimUI() {
+        const total = state.video.duration || 1;
+        const maxStart = Math.max(0, total - Math.min(state.video.clipDuration, total));
+        el.videoStartSlider.max = maxStart.toFixed(1);
+
+        if (state.video.startTime > maxStart) {
+          state.video.startTime = maxStart;
+          el.videoStartSlider.value = maxStart.toFixed(1);
+        }
+
+        const start = state.video.startTime;
+        const end = Math.min(total, start + state.video.clipDuration);
+
+        el.startTimeVal.textContent = start.toFixed(1) + 's';
+        el.trimRangeLabel.textContent = `${start.toFixed(1)}s → ${end.toFixed(1)}s`;
+
+        const leftPct = (start / total) * 100;
+        const widthPct = ((end - start) / total) * 100;
+        el.timelineWindow.style.left = `${leftPct}%`;
+        el.timelineWindow.style.width = `${Math.max(4, widthPct)}%`;
+      }
+
+      el.videoStartSlider.addEventListener('input', (e) => {
+        state.video.startTime = parseFloat(e.target.value) || 0;
+        el.videoPreview.currentTime = state.video.startTime;
+        updateVideoTrimUI();
+      });
+
+      // Duration pills
+      document.querySelectorAll('.dur-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.video.clipDuration = parseInt(btn.dataset.dur, 10);
+          document.querySelectorAll('.dur-btn').forEach((b) => {
+            const active = b === btn;
+            b.className = active
+              ? 'dur-btn ios-tap py-2 rounded-xl text-[13px] font-semibold bg-ios-blue text-white'
+              : 'dur-btn ios-tap py-2 rounded-xl text-[13px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]';
+          });
+          updateVideoTrimUI();
+        });
+      });
+
+      // Aspect ratio pills
+      document.querySelectorAll('.ratio-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.video.ratio = btn.dataset.ratio;
+          document.querySelectorAll('.ratio-btn').forEach((b) => {
+            const active = b === btn;
+            b.className = active
+              ? 'ratio-btn ios-tap py-2 px-2 rounded-xl text-[12px] font-semibold bg-ios-blue text-white'
+              : 'ratio-btn ios-tap py-2 px-2 rounded-xl text-[12px] font-semibold bg-[var(--pill-bg)] text-[var(--text-primary)] border border-[var(--hairline)]';
+          });
+        });
+      });
+
+      // Bitrate pills
+      document.querySelectorAll('.bitrate-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.video.bitrate = parseInt(btn.dataset.bitrate, 10);
+          document.querySelectorAll('.bitrate-btn').forEach((b) => {
+            const active = b === btn;
+            b.className = active
+              ? 'bitrate-btn ios-tap p-2.5 rounded-xl text-left bg-ios-blue/15 border border-ios-blue text-[var(--text-primary)]'
+              : 'bitrate-btn ios-tap p-2.5 rounded-xl text-left bg-[var(--pill-bg)] border border-[var(--hairline)] text-[var(--text-primary)]';
+          });
+        });
+      });
+
+      function getBestVideoMimeType() {
+        const candidates = [
+          { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4' },
+          { mime: 'video/mp4;codecs=h264,aac', ext: 'mp4' },
+          { mime: 'video/mp4', ext: 'mp4' },
+          { mime: 'video/webm;codecs=vp9,opus', ext: 'webm' },
+          { mime: 'video/webm;codecs=vp8,opus', ext: 'webm' },
+          { mime: 'video/webm', ext: 'webm' },
+        ];
+        for (const c of candidates) {
+          if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c.mime)) {
+            return c;
+          }
+        }
+        return { mime: '', ext: 'webm' };
+      }
+
+      // Real-time Client-side Video Encoding
+      el.renderVideoBtn.addEventListener('click', startVideoOptimization);
+      el.cancelEncodeBtn.addEventListener('click', () => {
+        state.video.cancelRequested = true;
+      });
+
+      async function startVideoOptimization() {
+        if (!state.video.file || state.video.isEncoding) return;
+        if (typeof MediaRecorder === 'undefined') {
+          showToast('Video encoding not supported in this browser', 'error');
+          return;
+        }
+
+        const video = el.videoPreview;
+        const canvas = el.videoEncodeCanvas;
+        const ctx = canvas.getContext('2d');
+
+        // Calculate output canvas dimensions (720p/1080p sweet spot for smooth client-side encoding)
+        const vw = video.videoWidth || 720;
+        const vh = video.videoHeight || 1280;
+        let outW, outH;
+
+        if (state.video.ratio === 'blurfit' || state.video.ratio === 'fill') {
+          outW = 720;
+          outH = 1280;
+        } else {
+          const maxDim = 1280;
+          const scale = Math.min(1, maxDim / Math.max(vw, vh));
+          outW = Math.round((vw * scale) / 2) * 2;
+          outH = Math.round((vh * scale) / 2) * 2;
+        }
+
+        canvas.width = outW;
+        canvas.height = outH;
+
+        const startT = state.video.startTime;
+        const endT = Math.min(state.video.duration, startT + state.video.clipDuration);
+        const clipLen = Math.max(0.5, endT - startT);
+
+        state.video.isEncoding = true;
+        state.video.cancelRequested = false;
+        state.video.outputBlob = null;
+        el.videoReadyBanner.classList.add('hidden');
+        el.videoEncodingOverlay.classList.remove('hidden');
+        updateEncodeProgress(0);
+
+        try {
+          // Prepare MediaStream from Canvas
+          const canvasStream = canvas.captureStream(30);
+          const tracks = [...canvasStream.getVideoTracks()];
+
+          // Capture Audio track via Web Audio API (single reusable AudioContext per video element)
+          try {
+            if (!state.video.audioCtx) {
+              const AudioCtx = window.AudioContext || window.webkitAudioContext;
+              state.video.audioCtx = new AudioCtx();
+              state.video.audioSource = state.video.audioCtx.createMediaElementSource(video);
+              state.video.audioDest = state.video.audioCtx.createMediaStreamDestination();
+              state.video.audioSource.connect(state.video.audioDest);
+              // Keep silent during encoding or route softly if needed
+            }
+            if (state.video.audioCtx.state === 'suspended') {
+              await state.video.audioCtx.resume();
+            }
+            const audioTracks = state.video.audioDest.stream.getAudioTracks();
+            if (audioTracks.length > 0) {
+              tracks.push(audioTracks[0]);
+            }
+          } catch (audioErr) {
+            console.warn('Audio capture fallback (video-only):', audioErr);
+          }
+
+          const combinedStream = new MediaStream(tracks);
+          const { mime, ext } = getBestVideoMimeType();
+          state.video.outputExt = ext;
+
+          const recOptions = {
+            videoBitsPerSecond: state.video.bitrate,
+            audioBitsPerSecond: 128000,
+          };
+          if (mime) recOptions.mimeType = mime;
+
+          const recorder = new MediaRecorder(combinedStream, recOptions);
+          const chunks = [];
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+
+          const recordingDone = new Promise((resolve) => {
+            recorder.onstop = () => resolve();
+          });
+
+          // Seek to start time and wait for seeked event
+          video.pause();
+          video.currentTime = startT;
+          await new Promise((res) => {
+            const onSeeked = () => {
+              video.removeEventListener('seeked', onSeeked);
+              res();
+            };
+            video.addEventListener('seeked', onSeeked);
+          });
+
+          recorder.start(250);
+          await video.play();
+
+          // Frame draw loop
+          let animId = null;
+          const drawFrame = () => {
+            if (state.video.cancelRequested || video.paused || video.ended || video.currentTime >= endT) {
+              cancelAnimationFrame(animId);
+              video.pause();
+              if (recorder.state !== 'inactive') recorder.stop();
+              return;
+            }
+
+            // Render frame onto offscreen canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, outW, outH);
+
+            if (state.video.ratio === 'blurfit') {
+              ctx.save();
+              ctx.filter = 'blur(24px) brightness(0.65)';
+              const sFill = Math.max(outW / vw, outH / vh) * 1.1;
+              ctx.drawImage(video, (outW - vw * sFill) / 2, (outH - vh * sFill) / 2, vw * sFill, vh * sFill);
+              ctx.restore();
+
+              const sFit = Math.min(outW / vw, outH / vh);
+              const fw = vw * sFit;
+              const fh = vh * sFit;
+              ctx.drawImage(video, (outW - fw) / 2, (outH - fh) / 2, fw, fh);
+            } else if (state.video.ratio === 'fill') {
+              const sFill = Math.max(outW / vw, outH / vh);
+              const fw = vw * sFill;
+              const fh = vh * sFill;
+              ctx.drawImage(video, (outW - fw) / 2, (outH - fh) / 2, fw, fh);
+            } else {
+              ctx.drawImage(video, 0, 0, outW, outH);
+            }
+
+            const elapsed = Math.max(0, video.currentTime - startT);
+            const pct = Math.min(99, Math.round((elapsed / clipLen) * 100));
+            updateEncodeProgress(pct);
+
+            animId = requestAnimationFrame(drawFrame);
+          };
+
+          animId = requestAnimationFrame(drawFrame);
+          await recordingDone;
+
+          if (state.video.cancelRequested) {
+            showToast('Encoding cancelled', 'info');
+          } else {
+            updateEncodeProgress(100);
+            const outBlob = new Blob(chunks, { type: mime || 'video/webm' });
+            state.video.outputBlob = outBlob;
+            el.videoOutputMeta.textContent = `HD Ready • ${formatBytes(outBlob.size)} (${ext.toUpperCase()})`;
+            el.videoReadyBanner.classList.remove('hidden');
+            el.renderVideoBtnText.textContent = 'Re-Optimize Video';
+            showToast('HD Video ready to save!');
+          }
+        } catch (err) {
+          console.error('Video encoding error:', err);
+          showToast('Video encoding failed on this device', 'error');
+        } finally {
+          state.video.isEncoding = false;
+          el.videoEncodingOverlay.classList.add('hidden');
+          updateActionButtons();
+        }
+      }
+
+      function updateEncodeProgress(pct) {
+        const circumference = 213.6;
+        const offset = circumference - (pct / 100) * circumference;
+        el.encodeRing.style.strokeDashoffset = offset.toFixed(1);
+        el.encodePercent.textContent = `${pct}%`;
+      }
+
+      /* =====================================================================
+         5. EXPORT, SHARE & RESET ACTIONS
+         ===================================================================== */
+      function getActiveExportData() {
+        const ts = new Date().toISOString().slice(11, 19).replace(/:/g, '');
+        if (state.mode === 'photo' && state.photo.outputBlob) {
+          return {
+            blob: state.photo.outputBlob,
+            filename: `StatusHD_Photo_${state.photo.outW}x${state.photo.outH}_${ts}.jpg`,
+            mime: 'image/jpeg',
+          };
+        }
+        if (state.mode === 'video' && state.video.outputBlob) {
+          const ext = state.video.outputExt || 'mp4';
+          return {
+            blob: state.video.outputBlob,
+            filename: `StatusHD_Video_HD_${ts}.${ext}`,
+            mime: state.video.outputBlob.type || 'video/mp4',
+          };
+        }
+        return null;
+      }
+
+      // Save HD Download
+      el.saveBtn.addEventListener('click', () => {
+        const data = getActiveExportData();
+        if (!data) return;
+
+        const url = URL.createObjectURL(data.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        showToast(`Saved ${data.filename}`);
+      });
+
+      // Web Share API (Direct to WhatsApp on mobile)
+      el.shareBtn.addEventListener('click', async () => {
+        const data = getActiveExportData();
+        if (!data) return;
+
+        try {
+          const file = new File([data.blob], data.filename, { type: data.mime });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'StatusHD',
+              text: 'Optimized for crisp HD WhatsApp Status',
+            });
+            showToast('Shared successfully');
+          } else {
+            showToast('Direct share unsupported here — tap Save HD', 'info');
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            showToast('Could not open share sheet — tap Save HD', 'info');
+          }
+        }
+      });
+
+      // Reset / New
+      el.resetBtn.addEventListener('click', () => {
+        if (state.mode === 'photo') {
+          state.photo.file = null;
+          state.photo.img = null;
+          state.photo.outputBlob = null;
+          el.photoInput.value = '';
+          el.photoWorkspace.classList.add('hidden');
+          el.photoDropzone.classList.remove('hidden');
+          showToast('Ready for a new photo', 'info');
+        } else {
+          if (state.video.isEncoding) return;
+          if (state.video.url) URL.revokeObjectURL(state.video.url);
+          state.video.file = null;
+          state.video.url = null;
+          state.video.outputBlob = null;
+          el.videoInput.value = '';
+          el.videoPreview.removeAttribute('src');
+          el.videoPreview.load();
+          el.videoWorkspace.classList.add('hidden');
+          el.videoDropzone.classList.remove('hidden');
+          el.videoReadyBanner.classList.add('hidden');
+          el.renderVideoBtnText.textContent = 'Process & Optimize Video';
+          showToast('Ready for a new video', 'info');
+        }
+        updateActionButtons();
+      });
+
+      // Initial state check
+      updateActionButtons();
+    })();
+  </script>
+</body>
+</html>
